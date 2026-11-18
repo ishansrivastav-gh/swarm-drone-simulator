@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Virtual Swarm Drone Simulator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand"><b>Swarm</b><span>Virtual drone simulator</span></div>
+  <div class="status"><i class="dot"></i><span>System online</span><strong id="missionName">Standby</strong></div>
+  <div class="tools">
+    <span class="clock" id="timeDisplay">00:00:00</span>
+    <button class="ghost" id="settingsBtn">Settings</button>
+    <button class="ghost" id="fullscreenBtn">Fullscreen</button>
+  </div>
+</header>
+
+<main class="grid">
+  <!-- DRONE VIEW -->
+  <section class="panel" id="viewPanel">
+    <div class="ph"><h2>Drone view</h2>
+      <nav class="seg" id="viewSeg">
+        <button data-view="fpv">FPV</button><button data-view="tpv" class="on">TPV</button><button data-view="swarm">Swarm</button>
+        <button data-view="map">Map</button><button data-view="vr">VR</button><button data-view="ar">AR</button>
+      </nav>
+    </div>
+    <div class="stage" id="stage">
+      <video id="arVideo" playsinline muted autoplay></video>
+      <div id="mapWrap"><div id="map"></div></div>
+      <canvas id="droneCanvas"></canvas>
+      <div class="eyeline"></div>
+      <div class="hud">
+        <div class="readout">
+          <div><span>Drone</span><b id="droneId">#1</b></div>
+          <div><span>Alt</span><b id="altitude">0 m</b></div>
+          <div><span>Speed</span><b id="speed">0 m/s</b></div>
+          <div><span>Battery</span><b id="battery">100%</b></div>
+          <div><span>GPS</span><b id="gps">--</b></div>
+        </div>
+        <div class="compass"><b id="heading">000°</b><b id="targetLock" class="lock">No lock</b></div>
+        <div class="minimap"><canvas id="minimapCanvas" width="150" height="150"></canvas></div>
+        <div class="chips">
+          <button id="terrainChip"><span id="terrainType">Urban</span></button>
+          <button id="todChip"><span id="timeOfDay">Day</span></button>
+          <button id="weatherChip"><span id="weather">Clear</span></button>
+        </div>
+        <div class="mapbar"><span id="mapBadge"></span><button id="recenterBtn">Recenter</button></div>
+        <button class="exitxr" id="exitXrBtn">Exit immersive mode</button>
+        <div class="hint" id="viewHint"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- COMMAND -->
+  <section class="panel scroll">
+    <div class="ph"><h2>Control &amp; command</h2></div>
+    <div class="body">
+      <div class="blk">
+        <h3>Mission controls</h3>
+        <div class="btns">
+          <button class="btn go" id="startMissionBtn">Start</button>
+          <button class="btn alt" id="pauseMissionBtn">Pause</button>
+          <button class="btn bad" id="recallBtn">Recall</button>
+          <button class="btn inv" id="regroupBtn">Regroup</button>
+        </div>
+      </div>
+      <div class="blk">
+        <h3>Swarm configuration</h3>
+        <label>Drone count <b id="droneCountValue">50</b></label>
+        <input type="range" id="droneCount" min="10" max="1000" value="50" step="10">
+        <label>Formation</label>
+        <select id="formationType">
+          <option value="grid">Grid formation</option><option value="v">V-formation</option><option value="circle">Circle formation</option>
+          <option value="sphere">Sphere formation</option><option value="line">Line formation</option><option value="random">Random swarm</option>
+        </select>
+        <label>Behavior mode</label>
+        <select id="behaviorMode">
+          <option value="leader">Leader-follower</option><option value="decentral">Decentralized swarm</option>
+          <option value="hier">Hierarchical</option><option value="flock">Flocking behavior</option>
+        </select>
+      </div>
+      <div class="blk">
+        <h3>Swarm parameters</h3>
+        <label>Speed <b><span id="swarmSpeedValue">5</span> m/s</b></label><input type="range" id="swarmSpeed" min="1" max="20" value="5" step="0.5">
+        <label>Spacing <b><span id="spacingValue">10</span> m</b></label><input type="range" id="spacing" min="5" max="50" value="10" step="1">
+        <label>Comm latency <b><span id="commLatencyValue">50</span> ms</b></label><input type="range" id="commLatency" min="0" max="500" value="50" step="10">
+        <label>Packet loss <b><span id="packetLossValue">0</span> %</b></label><input type="range" id="packetLoss" min="0" max="80" value="0" step="5">
+      </div>
+      <div class="blk">
+        <h3>AI behavior weights</h3>
+        <label>Separation <b id="separationWeightValue">1.5</b></label><input type="range" id="separationWeight" min="0" max="5" value="1.5" step="0.1">
+        <label>Alignment <b id="alignmentWeightValue">1.0</b></label><input type="range" id="alignmentWeight" min="0" max="5" value="1" step="0.1">
+        <label>Cohesion <b id="cohesionWeightValue">1.0</b></label><input type="range" id="cohesionWeight" min="0" max="5" value="1" step="0.1">
+        <label>Goal seeking <b id="goalWeightValue">2.0</b></label><input type="range" id="goalWeight" min="0" max="5" value="2" step="0.1">
+      </div>
+      <div class="blk">
+        <h3>Waypoints</h3>
+        <div class="wps" id="waypointList"></div>
+        <div class="btns">
+          <button class="btn inv" id="addWaypointBtn">Add random</button>
+          <button class="btn alt" id="placeWpBtn">Click to place: off</button>
+        </div>
+        <button class="btn ghostb" id="clearWpBtn">Clear all waypoints</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALYTICS -->
+  <section class="panel scroll">
+    <div class="ph"><h2>Analytics</h2>
+      <nav class="seg" id="tabSeg"><button data-tab="telemetryTab" class="on">Telemetry</button><button data-tab="performanceTab">Performance</button><button data-tab="eventsTab">Events</button></nav>
+    </div>
+    <div class="body">
+      <div class="tab on" id="telemetryTab">
+        <div class="stats">
+          <div class="stat"><span>Active drones</span><b id="activeDrones">50</b></div>
+          <div class="stat"><span>Signal strength</span><b id="signalStrength">100%</b></div>
+          <div class="stat"><span>Collisions avoided</span><b id="collisionsAvoided">0</b></div>
+          <div class="stat"><span>Coverage area</span><b id="coverageArea">0.00 km²</b></div>
+        </div>
+        <div class="card"><h3>Velocity distribution</h3><div class="chartbox"><canvas id="velocityChart"></canvas></div></div>
+        <div class="card"><h3>Position tracking</h3><div class="chartbox"><canvas id="positionChart"></canvas></div></div>
+      </div>
+      <div class="tab" id="performanceTab">
+        <div class="score"><span>Mission score</span><b id="missionScore">0</b>
+          <dl>
+            <dt>Formation accuracy · 30%</dt><dd id="formationScore">0%</dd>
+            <dt>Collision avoidance · 30%</dt><dd id="collisionScore">100%</dd>
+            <dt>Communication · 20%</dt><dd id="commScore">100%</dd>
+            <dt>Mission completion · 20%</dt><dd id="completionScore">0%</dd>
+          </dl>
+        </div>
+        <div class="card"><h3>Swarm coverage heatmap</h3><canvas id="heatmapCanvas" width="300" height="300"></canvas></div>
+      </div>
+      <div class="tab" id="eventsTab">
+        <div class="btns two"><button class="btn ghostb" id="clearEventsBtn">Clear log</button><button class="btn ghostb" id="exportEventsBtn">Export JSON</button></div>
+        <div class="log" id="eventLog"></div>
+        <div class="card"><h3>Mission replay</h3>
+          <div class="rp"><button id="replayBackBtn">◀◀</button><button id="replayPlayBtn">▶</button><button id="replayForwardBtn">▶▶</button><span id="replaySpeed">1x</span></div>
+          <input type="range" id="replayTimeline" min="0" max="100" value="0" step="1">
+        </div>
+        <div class="card"><h3>Failure simulation</h3>
+          <div class="btns"><button class="btn bad" id="simulateCommFailure">Comm loss</button><button class="btn bad" id="simulateNodeFailure">Node failure</button><button class="btn bad" id="simulatePacketLoss">Packet loss</button></div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">
+  <span>FPS <b id="fpsCounter">60</b></span>
+  <button id="simSpeedBtn">Simulation speed <b id="simSpeed">1.0x</b></button>
+  <span id="systemMessage">System ready for mission deployment</span>
+  <span class="r">Training platform · virtual only</span>
+</footer>
+
+<dialog id="settingsDlg">
+  <form method="dialog" id="settingsForm">
+    <h2>Settings</h2>
+    <label>Google Maps API key <input id="cfgKey" type="text" placeholder="AIza… (optional)" autocomplete="off"></label>
+    <label>Map provider
+      <select id="cfgProv"><option value="auto">Auto (Google if key, else Esri satellite)</option><option value="google">Google Maps</option><option value="leaflet">Esri satellite (no key)</option></select>
+    </label>
+    <div class="two"><label>Base latitude <input id="cfgLat" type="number" step="0.0001"></label><label>Base longitude <input id="cfgLng" type="number" step="0.0001"></label></div>
+    <p class="note">Saved in this browser only. The page reloads after saving.</p>
+    <div class="btns two"><button class="btn go" value="save" id="cfgSave">Save and reload</button><button class="btn ghostb" value="cancel">Cancel</button></div>
+  </form>
+</dialog>
+
+<script src="config.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
