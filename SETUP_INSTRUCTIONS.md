@@ -3,6 +3,7 @@
 ## 0. What works with zero setup
 Open the project through a local web server (step 1) with internet access. You get the full simulator, the satellite map (Esri, no key), and VR/AR fallbacks. Only these items need your action:
 - Google Maps API key: optional, only if you want Google imagery.
+- Map location search works in the Map view; it uses Google Maps when available and OpenStreetMap search otherwise.
 - HTTPS: required for camera AR and real WebXR on a phone or headset.
 - A WebXR device: optional, for true VR/AR.
 
@@ -30,7 +31,7 @@ Without a key the Map view uses Esri satellite imagery and works fine. Do this o
 1. Go to https://console.cloud.google.com and sign in.
 2. Create a project (top bar, New Project).
 3. Open **Billing** and link a billing account. Google Maps will not load without one, even inside the free monthly credit. This is the most common reason the old version failed.
-4. Open **APIs & Services > Library**, search **Maps JavaScript API**, click **Enable**.
+4. Open **APIs & Services > Library**, search **Maps JavaScript API**, click **Enable**. To use Google for location search too, enable the **Geocoding API**; otherwise the search falls back to OpenStreetMap.
 5. Open **APIs & Services > Credentials > Create credentials > API key**. Copy the key.
 6. Click the key to restrict it (strongly recommended):
    - Application restrictions: **Websites (HTTP referrers)**. Add `http://localhost:8000/*`, `http://127.0.0.1:8000/*` and your deployed address, for example `https://your-project.vercel.app/*`.
@@ -54,6 +55,8 @@ Never commit a real key to a public GitHub repo. Use referrer restrictions, and 
 | Set a different location | Settings > Base latitude and longitude. The simulation origin is placed there. Default is San Francisco. |
 
 Map tips: turn on **Click to place** in the Waypoints box, then click the map to drop a waypoint. Click a drone dot to see its telemetry.
+
+In Map view, type a place or address in the search box and select a result to move the map and save it as the simulator base. Search results come from Google Maps when its geocoder is available, or OpenStreetMap otherwise.
 
 ## 3. VR (headset or phone)
 **Real WebXR (Meta Quest, other headsets with a WebXR browser)**

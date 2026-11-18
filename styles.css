@@ -72,6 +72,18 @@ select:focus,input[type=text]:focus,input[type=number]:focus{border-color:var(--
 .mapbar span{background:rgba(0,0,0,.85);border:2px solid var(--ink);padding:7px 12px;font-size:13px;font-weight:700}
 .mapbar button{background:var(--acc);color:#000;padding:9px 14px;font-weight:850;font-size:13px}
 .stage.map .readout,.stage.map .minimap{z-index:6}
+.map-search{position:absolute;top:14px;right:14px;width:min(360px,calc(100% - 28px));display:none;flex-direction:column;gap:6px;padding:8px;background:rgba(0,0,0,.9);border:2px solid var(--ink);pointer-events:auto}
+.stage.map .map-search{display:flex}
+.map-search-row{display:flex;gap:6px}
+.map-search-row input{min-width:0;background:var(--card);border:2px solid var(--line);border-radius:4px;padding:8px;font-size:13px}
+.map-search-row input:focus{border-color:var(--acc)}
+.map-search-row button{flex:none;background:var(--acc);color:#000;padding:0 12px;font-size:13px;font-weight:850}
+.map-search-status{font-size:11px;color:var(--mute)}
+.map-search-results{display:flex;flex-direction:column;max-height:180px;overflow:auto}
+.map-search-results:empty{display:none}
+.map-search-result{padding:8px;text-align:left;font-size:12px;line-height:1.35;border-top:1px solid var(--line)}
+.map-search-result:hover{background:var(--hi);color:var(--acc)}
+.stage.map .minimap{display:none}
 .exitxr{display:none;position:absolute;right:14px;bottom:14px;background:var(--red);color:#000;padding:12px 16px;font-weight:850}
 .stage.xr .exitxr{display:block}
 .hint{position:absolute;left:14px;bottom:56px;max-width:60%;font-size:12px;color:var(--ink);background:rgba(0,0,0,.8);padding:6px 10px;display:none}

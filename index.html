@@ -43,6 +43,14 @@
           <div><span>Battery</span><b id="battery">100%</b></div>
           <div><span>GPS</span><b id="gps">--</b></div>
         </div>
+        <form class="map-search" id="mapSearchForm" role="search">
+          <div class="map-search-row">
+            <input id="mapSearchInput" type="search" placeholder="Search a place or address" aria-label="Search a map location" autocomplete="off" required>
+            <button type="submit" aria-label="Search locations">Search</button>
+          </div>
+          <div class="map-search-status" id="mapSearchStatus" role="status" aria-live="polite"></div>
+          <div class="map-search-results" id="mapSearchResults"></div>
+        </form>
         <div class="compass"><b id="heading">000°</b><b id="targetLock" class="lock">No lock</b></div>
         <div class="minimap"><canvas id="minimapCanvas" width="150" height="150"></canvas></div>
         <div class="chips">

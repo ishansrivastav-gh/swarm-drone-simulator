@@ -276,6 +276,60 @@ function useLeaflet() {
   MAP.api = leafletApi(el); MAP.kind = 'leaflet'; MAP.api.onClick(onMapClick); $('mapBadge').textContent = 'Map: Esri satellite';
 }
 function onMapClick(la, ln) { if (!S.placeMode) return; const w = ll2w(la, ln); addWaypoint(w[0], 55, w[1]); }
+function googleLocationSearch(query) {
+  return new Promise((resolve, reject) => {
+    new google.maps.Geocoder().geocode({ address: query }, (results, status) => {
+      if (status !== 'OK') { reject(new Error(status)); return; }
+      resolve(results.slice(0, 5).map(result => ({
+        label: result.formatted_address,
+        lat: result.geometry.location.lat(),
+        lng: result.geometry.location.lng()
+      })));
+    });
+  });
+}
+async function openStreetMapLocationSearch(query) {
+  const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=5&q=${encodeURIComponent(query)}`;
+  const response = await fetch(url, { headers: { Accept: 'application/json' } });
+  if (!response.ok) throw new Error(`Location search failed (${response.status})`);
+  const results = await response.json();
+  return results.map(result => ({ label: result.display_name, lat: Number(result.lat), lng: Number(result.lon) }));
+}
+function showMapSearchResults(results) {
+  const box = $('mapSearchResults'); box.replaceChildren();
+  results.forEach(result => {
+    const button = document.createElement('button'); button.type = 'button'; button.className = 'map-search-result'; button.textContent = result.label;
+    button.onclick = () => {
+      CFG.BASE_LAT = result.lat; CFG.BASE_LNG = result.lng;
+      localStorage.setItem('swarmCfg', JSON.stringify(Object.assign({}, stored, { BASE_LAT: result.lat, BASE_LNG: result.lng })));
+      MAP.api.center(result.lat, result.lng); syncMapStatic(); updateMapMarkers();
+      $('mapSearchInput').value = result.label; box.replaceChildren();
+      $('mapSearchStatus').textContent = `Simulation base set to ${result.lat.toFixed(5)}, ${result.lng.toFixed(5)}`;
+      log(`Map location selected: ${result.label}`);
+    };
+    box.appendChild(button);
+  });
+}
+let mapSearchBusy = false;
+$('mapSearchForm').addEventListener('submit', async e => {
+  e.preventDefault(); if (mapSearchBusy) return;
+  const query = $('mapSearchInput').value.trim(); if (!query) return;
+  mapSearchBusy = true; $('mapSearchStatus').textContent = 'Searching…'; $('mapSearchResults').replaceChildren();
+  try {
+    let results, source;
+    if (MAP.kind === 'google') {
+      try { results = await googleLocationSearch(query); source = 'Google Maps'; }
+      catch (error) { log(`Google location search unavailable (${error.message}); trying OpenStreetMap.`, 'warning'); }
+    }
+    if (!results) { results = await openStreetMapLocationSearch(query); source = 'OpenStreetMap'; }
+    if (!results.length) { $('mapSearchStatus').textContent = 'No matching locations found.'; return; }
+    showMapSearchResults(results);
+    $('mapSearchStatus').textContent = source === 'OpenStreetMap' ? 'Search results from OpenStreetMap.' : 'Search results from Google Maps.';
+  } catch (error) {
+    $('mapSearchStatus').textContent = `Search failed: ${error.message}`;
+    log(`Map location search failed: ${error.message}`, 'error');
+  } finally { mapSearchBusy = false; }
+});
 function initMap() {
   if (MAP.api) return Promise.resolve(); if (MAP.busy) return MAP.busy;
   const el = $('map'), key = CFG.GOOGLE_MAPS_API_KEY, wantG = key && CFG.MAP_PROVIDER !== 'leaflet';

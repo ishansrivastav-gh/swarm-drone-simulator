@@ -15,6 +15,7 @@ SETUP_INSTRUCTIONS.md everything you must do on your side (API key, running, VR/
 ## What changed from v2.0
 - New black, high-contrast UI (Archivo type, yellow signal colour).
 - **Maps fixed.** Works with no key (Esri satellite via Leaflet). If you add a Google Maps key it uses Google, and falls back to Esri automatically when the key is rejected, billing is off, or the script is blocked.
+- Search for a place in the Map view and choose a result to set the simulator's saved base location. Search uses Google Maps when available, with OpenStreetMap as a no-key fallback.
 - **VR / AR rewritten** on native WebXR in Three.js (A-Frame removed). Headsets and ARCore phones use real WebXR. Everything else gets a working fallback: split-screen VR for phone headsets, and camera-passthrough AR.
 - Drones render as GPU instances, so 1000 drones stay playable.
 - Real packet loss, latency (delayed neighbour data), comm failure and node failure.
